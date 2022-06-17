@@ -1,30 +1,37 @@
 import java.util.LinkedList;
 import java.util.Queue;
 public class BTree {
-    private Node root;
-    private int order;//even
-    private int level;
+    private Node root;  // root of B-Tree
+    private int order;  // even number 
 
+    // Constructor of B-Tree
     public BTree(int order){
         this.order = order;
         root = new Node(order-1);
-        level = 0;
     }
-        
-    public Node split(Node parent, Node n, Integer e){//현재 노드(n)을 중앙을 기준으로 분할
-        Integer[] keyArr = n.getKey();
-        Node leftChild = new Node(order-1);
-        Node rightChild = new Node(order-1);
-        int mid = order/2-1;
-        if(n == root){//현재 노드가 root
-            root = new Node(order-1);//새로운 root 생성
-            root.insertKey(keyArr[mid]);//새로운 root에 n의 중앙값 삽입
-            for(int i=0;i<mid;i++){//key값 복사
+    
+    // for spliting Node when the node is fulled 
+    // split current node "n" by center 
+    // second argument is a current node 'n' and first argument is parent of 'n' 
+    public Node split(Node parent, Node n, Integer e){
+        Integer[] keyArr = n.getKey();  // copy keyArr of current node 'n' to keyArr
+        Node leftChild = new Node(order-1); // will be left child of spilted node
+        Node rightChild = new Node(order-1); //// will be right child of spilted node
+        int mid = order/2-1; // middle index of keyArr
+
+        // if currnet node 'n' is root node
+        if(n == root){
+            root = new Node(order-1);   // create new root 
+            root.insertKey(keyArr[mid]);    // insert middle value of current node into root
+            // insert left keys of mid into left child, right key of mid into right child
+            for(int i=0;i<mid;i++){
                 leftChild.insertKey(keyArr[i]);
                 rightChild.insertKey(keyArr[mid+i+1]);
             }
-            if(!n.isLeaf()){//child가 있는 경우 child 복사
-                Node[] childArr = n.getChildArr();
+            // current node 'n' is root and have children (or has a child)
+            if(!n.isLeaf()){
+                Node[] childArr = n.getChildArr();  // copy childArr of 'n' to childArr
+                // loop for child's child
                 for(int i=0;i<=mid;i++){
                     leftChild.insertChild(i,childArr[i]);
                     rightChild.insertChild(i,childArr[mid+i+1]);
@@ -32,58 +39,70 @@ public class BTree {
                 root.insertChild(0,leftChild);
                 root.insertChild(1,rightChild);
             }
+            // current node 'n' is root and leaf node
             else{
-                root.insertChild(leftChild);
-                root.insertChild(rightChild);
+                root.insertChild(leftChild);    // connect root and leftChild
+                root.insertChild(rightChild);   // connect root and rightChild
             }
-            if(e<keyArr[mid])//e가 위치할 수 있는 노드 반환
+            // return node that 'e' can be located
+            if(e<keyArr[mid])
                 return leftChild;
             else
                 return rightChild;
         }
-        else{//현재 노드가 root가 아닌 경우
+        // if currnet node 'n' is not root node
+        else{
             int pKeyCnt = parent.getKeyCnt();
             int index = findIndex(parent, n);
             parent.insertKey(keyArr[mid]);
             for(int i=pKeyCnt;i>index;i--)
                 parent.moveChild(i, i+1);
-            for(int i=0;i<mid;i++){//key값 복사
+            // copy key values
+            for(int i=0;i<mid;i++){
                 leftChild.insertKey(keyArr[i]);
                 rightChild.insertKey(keyArr[mid+i+1]);
             }
-            if(!n.isLeaf()){//child가 있는 경우 child 복사
+            // if currnet node 'n' is not root node and have children(or has a child)
+            if(!n.isLeaf()){
                 Node[] childArr = n.getChildArr();
                 for(int i=0;i<=mid;i++){
                     leftChild.insertChild(i,childArr[i]);
                     rightChild.insertChild(i,childArr[mid+i+1]);
                 }
             }
-            parent.insertChild(index,leftChild);
-            parent.insertChild(index+1,rightChild);
+            parent.insertChild(index,leftChild);    // connect parent node and leftChild
+            parent.insertChild(index+1,rightChild); // connect parent node and rightChild
+
+            // return node that 'e' can be located
             if(e<keyArr[mid])
                 return leftChild;
             else
                 return rightChild;
         }
     }
-    
-    public void insert(Integer e){//트리에 e 삽입
-        insertItem(null,root,e);
+    // insert the value 'e' into Tree
+    public void insert(Integer e){
+        insertItem(null,root,e);    // call insertItem function
     }
-    
-    public void insertItem(Node parent, Node n, Integer e){//삽입 메인
-        if(n.isFull()){//현재 노드(n)이 가득 찬 경우 분할
-            n=split(parent,n,e);//split 함수의 반환값을 현재 노드 n에 저장
+    // main algorithm of insert key in BTree
+    public void insertItem(Node parent, Node n, Integer e){
+        // if current node 'n' is fulled
+        if(n.isFull()){
+            n=split(parent,n,e);    // call split function and copy function's return value to n
         }
-        if(n.isLeaf()){//만약 현재 노드가 leaf이면
-            n.insertKey(e);//e 삽입
-            return;//종료
+        // if  current node 'n' is leaf node and not fulled.
+        if(n.isLeaf()){
+            n.insertKey(e); // insert 'e' into 'n' node
+            return; // end function
         }
-        else{//현재 노드가 leaf 노드가 아니면 child 노드로 이동
+        // if current node is not leaf node, go to child node
+        else{
             Integer[] keyArr = n.getKey();
             Node[] childArr = n.getChildArr();
             int keyCnt = n.getKeyCnt();
-            if(e<keyArr[0]){//맞는 child 노드 찾아서 insertItem 함수 실행
+
+            // Find the correct child node and call insertItem function
+            if(e<keyArr[0]){
                 insertItem(n,childArr[0],e);
                 return;
             }
@@ -97,55 +116,61 @@ public class BTree {
                     return;
                 }
             }
-            return;
+            return; // end function
         }
         
     }
-
-    public int findIndex(Node parent, Node current){//현재 노드(current)가 부모 노드(parent)의 몇 번째 자식인지 인덱스 반환
-        Node[] pChildArr = parent.getChildArr();
-        int pKeyCnt = parent.getKeyCnt();
+    //Return index of parent's childArr of current node (location of current node in parent's childArr)
+    public int findIndex(Node parent, Node current){
+        Node[] pChildArr = parent.getChildArr(); // parent's child array
+        int pKeyCnt = parent.getKeyCnt();   // parent's key count 
         int index=-1;
+        //find location of current node and copy it to index
         for(int i=0;i<=pKeyCnt;i++){
             if(pChildArr[i]==current)
                 index=i;
         }
         return index;
     }
-
-    public void getFromLeft(Node parent, Node current){//현재 노드(current)의 왼쪽 노드에서 key 빌리기
+    // get key from left node of current node   
+    public void getFromLeft(Node parent, Node current){
         Node[] pChildArr = parent.getChildArr();
         int index = findIndex(parent, current);
         Node left = pChildArr[index-1];
         int leftKeyCnt = left.getKeyCnt();
         int currentChildCnt = current.getChildCnt();
-        Integer temp = parent.deleteKey(index-1);//부모 노드의 index에 해당하는 key값 삭제
-        parent.insertKey(left.deleteKey(leftKeyCnt-1));//왼쪽 노드의 마지막 key값을 부모 노드에 삽입
-        current.insertKey(temp);//부모 노드의 key값 받기
-        if(!current.isLeaf()){//현재 노드가 leaf 노드가 아니면 자식 옮기기
+        Integer temp = parent.deleteKey(index-1);//delete key value of index of parent node
+        parent.insertKey(left.deleteKey(leftKeyCnt-1));//Insert last key value of left node into parent node
+        current.insertKey(temp);//Receive key values for parent nodes
+
+        //If the current node is not a leaf node, move the child
+        if(!current.isLeaf()){
             for(int i=currentChildCnt-1;i>=0;i--)
                 current.moveChild(i, i+1);
             current.insertChild(0, left.deleteChild(leftKeyCnt));
         }
-
     }
 
-    public void getFromRight(Node parent, Node current){//현재 노드(current)의 오른쪽 노드에서 key 빌리기
+    // get key from right node of current node   
+    public void getFromRight(Node parent, Node current){
         Node[] pChildArr = parent.getChildArr();
         int index = findIndex(parent, current);
         Node right = pChildArr[index+1];
         Integer temp = parent.deleteKey(index);
-        parent.insertKey(right.deleteKey(0));//오른쪽 노드의 첫 번째 key를 부모 노드로 옮김
-        current.insertKey(temp);//부모 노드의 key를 받아옴
-        if(!current.isLeaf())//현재 노드가 leaf 노드가 아니면 자식도 받아오기
+
+        parent.insertKey(right.deleteKey(0)); //Move the first key of the right node to the parent node
+        current.insertKey(temp); // get key value of parent node 
+        // if current node is not leaf, get child node also
+        if(!current.isLeaf())
             current.insertChild(current.getChildCnt(), right.deleteChild(0));
     }
-
-    public Node getFromParent(Node parent, Node current){//부모 노드와 현재 노드 병합
+    // Merge the parent node with the current node
+    public Node getFromParent(Node parent, Node current){
         int index = findIndex(parent, current);
         Node left = new Node(order-1);
         Node right = new Node(order-1);
-        if(index==0){//병합할 형제 노드 찾기
+        //Find sibling nodes to merge
+        if(index==0){
             left = parent.deleteChild(index);
             right = parent.deleteChild(index);
             left.insertKey(parent.deleteKey(0));
@@ -157,13 +182,18 @@ public class BTree {
         }
         int leftKeyCnt = left.getKeyCnt();
         int rightKeyCnt = right.getKeyCnt();
-        for(int i=0;i<rightKeyCnt;i++)//left에 병합할거임. right에 있는 key값을 left로 복사하기
+
+        // Merge to left
+        // copy key values of right node to left
+        for(int i=0;i<rightKeyCnt;i++)
             left.insertKey(right.getKey(i));
-        if(!left.isLeaf()){//leaf 노드가 아닌 경우 child 노드도 복사하기
+        // if left node is not leaf, get child node also
+        if(!left.isLeaf()){
             for(int i=0;i<=rightKeyCnt;i++)
-            left.insertChild(leftKeyCnt+i,right.getchild(i));
+                left.insertChild(leftKeyCnt+i,right.getchild(i));
         }
-        if(index==0){//parent 노드의 자식으로 left 노드 삽입
+        // insert left node as child of parent node
+        if(index==0){
             for(int i=parent.getKeyCnt();i>=0;i--)
                 parent.moveChild(i, i+1);
             parent.insertChild(0, left);
@@ -173,61 +203,77 @@ public class BTree {
                 parent.moveChild(i, i+1);
             parent.insertChild(index-1, left);
         }
-        return left;//병합한 노드 반환
+        return left;    // return merged node
     }
-
-    public void replace(Node n, int index){//현재 노드(n)의 index에 해당하는 값을 n의 오른쪽 서브트리의 최솟값과 교체
+    //Replace the value of the current node n with 'the minimum value of the right subtree' of n
+    public void replace(Node n, int index){
         Integer e = n.getKey(index);
         Node temp = n.getchild(index+1);
+        // find the leftmost node (temp) in the right subtree
         while(!temp.isLeaf()){//오른쪽 서브트리의 가장 왼쪽 아래 노드(temp) 찾기
             temp = temp.getchild(0);
         }
         Integer re = temp.getKey(0);
-        temp.deleteKey(0);//temp의 최솟값 삭제
-        temp.insertKey(e);//e 삽입
-        n.deleteKey(e);//현재 노드에서 e 삭제
-        n.insertKey(re);//찾은 temp의 최솟값 삽입
+        temp.deleteKey(0);  // delete minimum vlaue of temp
+        temp.insertKey(e);  // insert e into temp 
+        n.deleteKey(e); // delete e from current node
+        n.insertKey(re);    // Insert minimum value of found temp 
         deleteItem(n, n.getchild(index), e);
     }
 
-    public void delete(Integer e){//트리에서 e 삭제
+    // delete 'e' from tree
+    public void delete(Integer e){
         deleteItem(null, root, e);
     }
-
+    // delete 'e' from tree 
+    // second argument is a current node 'n' and first argument 'parent' is parent of 'n' 
     public void deleteItem(Node parent, Node current, Integer e){
         int KeyCnt = current.getKeyCnt();
-        if(KeyCnt<=order/2-1){//현재 노드(current)의 key개수가 최소인 경우
-            if(current==root){//만약 현재 노드가 root 노드이면
+        // if the current node has a minimum number of keys
+        if(KeyCnt<=order/2-1){
+            // and if current node is root node
+            if(current==root){
                 Node[] ChildArr = root.getChildArr();
                 int childCnt = root.getChildCnt();
                 int cnt = root.getKeyCnt();
                 for(int i=0;i<childCnt;i++)
                     cnt += ChildArr[i].getChildCnt();
-                if(cnt<order)//자식 노드와 병합할 수 있으면
-                    current = getFromParent(root, ChildArr[0]);//병합
+                // If the root node can be merged with the child node
+                if(cnt<order)
+                    current = getFromParent(root, ChildArr[0]); // merge
             }
-            else{//현재 노드가 root 노드가 아니면
+            // if current node is not root (has a child)
+            else{
                 Node[] pChildArr = parent.getChildArr();
                 int index = findIndex(parent, current);
-                if(index != 0 && pChildArr[index-1].getKeyCnt()>order/2-1)//왼쪽 형제에서 key를 빌릴 수 있으면
-                    getFromLeft(parent, current);//왼쪽 형제에서 key 빌리기
+                // can get a key from the left sibling node
+                if(index != 0 && pChildArr[index-1].getKeyCnt()>order/2-1)  
+                    getFromLeft(parent, current); // get key from the left sibling node
+                // can get a key from the right sibling node    
                 else if(index != parent.getChildCnt()-1 && pChildArr[index+1].getKeyCnt()>order/2-1)//오른쪽 형제에서 key를 빌릴 수 있으면
-                    getFromRight(parent, current);//오른쪽 형제에서 key 빌리기
-                else{//형제에서 key를 빌리지 못하면
-                    current = getFromParent(parent, current);//병합
+                    getFromRight(parent, current);// get key from the right sibling node
+                // cannot get from any sibling node    
+                else{
+                    current = getFromParent(parent, current);   // merge
                 }
             }
         }
-        if(current.isLeaf()){//만약 현재 노드가 leaf 노드이면
-            if(current.findKeyIndex(e) != -1)//현재 노드에 찾는 값(e)가 있으면
-                current.deleteKey(e);//삭제
-            return;//함수 종료
+        // if current node is leaf node
+        if(current.isLeaf()){
+            // and if the current node has 'e'
+            if(current.findKeyIndex(e) != -1)
+                current.deleteKey(e); // delete 'e' from current node
+            return; // end function
         }
-        if(current.findKeyIndex(e)!=-1){//현재 노드가 leaf 노드가 아닌데 찾는 값(e)가 있으면
-            replace(current, current.findKeyIndex(e));//e를 leaf 노드의 값과 바꾸기, replace 함수 안에서 재귀
+        // if current node is not leaf node but has 'e'
+        if(current.findKeyIndex(e)!=-1){
+            // replace 'e' with the value of the leaf node
+            // recursive within the replace function
+            replace(current, current.findKeyIndex(e));
             return;
         }
-        else{//범위에 맞는 child 노드를 찾아서 재귀 수행
+        // Find child nodes in range and perform recursive
+        else{
             Integer[] keyArr = current.getKey();
         Node[] childArr = current.getChildArr();
         int keyCnt = current.getKeyCnt();
@@ -243,35 +289,40 @@ public class BTree {
         }
         }
     }
-
-    public void display(){//level에 맞춰서 트리 출력
-        Queue<Node> queue = new LinkedList<Node>();//util의 queue 사용
-        queue.add(root);//queue에 root 삽입
-        int cnt=1;//queue에 저장된 현재 level 개수
-        int childCnt = 0;//queue에 저장된 다음 level 개수
+    // display BTree 
+    public void display(){
+        Queue<Node> queue = new LinkedList<Node>(); // Queue for display (FIFO)
+        queue.add(root); // insert root into queue
+        int cnt=1;  //Current number of levels stored in the queue
+        int childCnt = 0;//Number of next levels stored in the queue
         Node node = null;
-        while(!queue.isEmpty()){//queue가 비어있지 않으면
-            node = queue.poll();//맨 앞의 노드 꺼내기
-            cnt--;
+        // while the queue is not empty
+        while(!queue.isEmpty()){
+            //poll first node in queue
+            node = queue.poll();
+            cnt--;  // decrease cnt by 1
             int keyCnt = node.getKeyCnt();
             Integer[] keyArr = node.getKey();
             System.out.print("(");
-            for(int i=0;i<keyCnt-1;i++)//꺼낸 노드의 key 출력
+
+            //print the keys of the pulled nodes
+            for(int i=0;i<keyCnt-1;i++)
                 System.out.print(keyArr[i]+", ");
             System.out.print(keyArr[keyCnt-1]+") ");
-            if(!node.isLeaf()){//꺼낸 노드가 leaf 노드가 아니면 queue에 자식 삽입
+
+            //If the pulled node is not a leaf node, insert a child into the queue
+            if(!node.isLeaf()){
                 Node[] childArr = node.getChildArr();
                 for(int i=0;i<=keyCnt;i++)
                     queue.add(childArr[i]);
                 childCnt += keyCnt+1;
             }
-            if(cnt==0){//현재 level의 노드를 다 꺼낸 경우 다음 level로 업데이트
+            // if all nodes at the current level have been polled, update to next level
+            if(cnt==0){
                 cnt = childCnt;
                 childCnt=0;
                 System.out.println();
             }
-            
         }
     }
-
 }
