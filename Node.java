@@ -15,6 +15,58 @@ public class Node{
         childCnt = 0; // Initialize childCnt as 0
 	}
 
+    // return whethere this node (keyArr) is empty(return True) or not(return False).
+    public boolean isEmpty(){
+        return keyCnt==0;
+    }
+
+    // return whethere this node (keyArr) is fulled(return True) or not(return False).
+    public boolean isFull(){
+        return keyCnt>=size;
+    }
+
+    // return whethere this node is leaf node(has no child, return True) or not(return False).
+    public boolean isLeaf(){
+        return childCnt==0; 
+    }
+
+    // return keyArr 
+    public Integer[] getKey(){
+        return keyArr;
+    }
+
+    // return how many keys in this node 
+    public Integer getKeyCnt(){
+        return keyCnt;
+    }
+
+    // return a specific key value of keyArr by receiving an index.
+    public Integer getKey(int index){
+        return keyArr[index];
+    }
+    
+    // return first element of keyArr
+    public Integer getFirst(){
+        if(isEmpty())
+            return null;
+        return keyArr[0];
+    }
+    
+    // return how many child nodes of this node 
+    public Integer getChildCnt(){
+        return childCnt;
+    }
+    
+    // return childArr (this array's element is Node object)
+    public Node[] getChildArr(){
+        return childArr;
+    }
+
+    // return a specific node of childArr by receiving an index.
+    public Node getchild(int i){
+        return childArr[i];
+    }
+
     //Insert key to keyArr by receiving a vlaue (e) 
 	public void insertKey(Integer e) {
         // if keyArr is fulled or argument 'e' is null, end function
@@ -44,26 +96,6 @@ public class Node{
         keyCnt++;   //increase keyCnt by 1    
 	}
 
-    // get keyArr for 
-    public Integer[] getKey(){
-        return keyArr;
-    }
-    // return how many keys in this node 
-    public Integer getKeyCnt(){
-        return keyCnt;
-    }
-    // return a specific key value of keyArr by receiving an index.
-    public Integer getKey(int index){
-        return keyArr[index];
-    }
-    // return how many child nodes of this node 
-    public Integer getChildCnt(){
-        return childCnt;
-    }
-    // return a specific node of childArr by receiving an index.
-    public Node getchild(int i){
-        return childArr[i];
-    }
     // connect this node (parent) and child node by receiving child Node
     public void insertChild(Node c){
         // if argument Node 'c' is null, end function
@@ -100,6 +132,7 @@ public class Node{
             }
         }
 	}
+
     // linking this node (parent) and child node by receiving an index and child node
     public void insertChild(int index, Node c){
         // If the index is valid
@@ -110,14 +143,12 @@ public class Node{
             childArr[index]=c;
         }
     }
+
     // change a specific child node's index from first argument to second argument
     public void moveChild(int from, int to){
         childArr[to] = childArr[from];
     }
-    // return childArr (this array's element is Node object)
-    public Node[] getChildArr(){
-        return childArr;
-    }
+    
     // find index of key(e) in keyArr
     public int findKeyIndex(Integer e){
         if(isEmpty() || e==null){
@@ -129,6 +160,7 @@ public class Node{
         }
         return -1;
     }
+
     // delete a specific key at keyArr by receiving a value (e).
     public void deleteKey(Integer e){
         int index = findKeyIndex(e);
@@ -140,12 +172,14 @@ public class Node{
         keyCnt--;
         return;
     }
+
     // delete a specific key at keyArr by receiving an index 
     public Integer deleteKey(int index){
         Integer temp = keyArr[index];
         deleteKey(temp);
         return temp;
     }
+
     // delete a child node of this node by receiving a Node (c).
     public void deleteChild(Node c){
         int index=0;
@@ -160,6 +194,7 @@ public class Node{
         }
         childCnt--;
     }
+
     // delete a child node of this node by receiving an index.(function overloading)
     public Node deleteChild(int index){
         Node temp = childArr[index];
@@ -167,22 +202,5 @@ public class Node{
         return temp;
     }
 
-    // return first element of keyArr
-    public Integer getFirst(){
-        if(isEmpty())
-            return null;
-        return keyArr[0];
-    }
-    // return whethere this node (keyArr) is empty(return True) or not(return False).
-    public boolean isEmpty(){
-        return keyCnt==0;
-    }
-    // return whethere this node (keyArr) is fulled(return True) or not(return False).
-    public boolean isFull(){
-        return keyCnt>=size;
-    }
-    // return whethere this node is leaf node(has no child, return True) or not(return False)s.
-    public boolean isLeaf(){
-        return childCnt==0; 
-    }
+    
 }

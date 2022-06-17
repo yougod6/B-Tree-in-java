@@ -9,7 +9,20 @@ public class BTree {
         this.order = order;
         root = new Node(order-1);
     }
-    
+
+    //Return index of parent's childArr of current node (location of current node in parent's childArr)
+    public int findIndex(Node parent, Node current){
+        Node[] pChildArr = parent.getChildArr(); // parent's child array
+        int pKeyCnt = parent.getKeyCnt();   // parent's key count 
+        int index=-1;
+        //find location of current node and copy it to index
+        for(int i=0;i<=pKeyCnt;i++){
+            if(pChildArr[i]==current)
+                index=i;
+        }
+        return index;
+    }
+        
     // for spliting Node when the node is fulled 
     // split current node "n" by center 
     // second argument is a current node 'n' and first argument is parent of 'n' 
@@ -80,10 +93,12 @@ public class BTree {
                 return rightChild;
         }
     }
+    
     // insert the value 'e' into Tree
     public void insert(Integer e){
         insertItem(null,root,e);    // call insertItem function
     }
+    
     // main algorithm of insert key in BTree
     public void insertItem(Node parent, Node n, Integer e){
         // if current node 'n' is fulled
@@ -118,20 +133,95 @@ public class BTree {
             }
             return; // end function
         }
-        
     }
-    //Return index of parent's childArr of current node (location of current node in parent's childArr)
-    public int findIndex(Node parent, Node current){
-        Node[] pChildArr = parent.getChildArr(); // parent's child array
-        int pKeyCnt = parent.getKeyCnt();   // parent's key count 
-        int index=-1;
-        //find location of current node and copy it to index
-        for(int i=0;i<=pKeyCnt;i++){
-            if(pChildArr[i]==current)
-                index=i;
+    
+
+    // delete 'e' from tree
+    public void delete(Integer e){
+        deleteItem(null, root, e);
+    }
+   
+    // delete 'e' from tree 
+    // second argument is a current node 'n' and first argument 'parent' is parent of 'n' 
+    public void deleteItem(Node parent, Node current, Integer e){
+        int KeyCnt = current.getKeyCnt();
+        // if the current node has a minimum number of keys
+        if(KeyCnt<=order/2-1){
+            // and if current node is root node
+            if(current==root){
+                Node[] ChildArr = root.getChildArr();
+                int childCnt = root.getChildCnt();
+                int cnt = root.getKeyCnt();
+                for(int i=0;i<childCnt;i++)
+                    cnt += ChildArr[i].getChildCnt();
+                // If the root node can be merged with the child node
+                if(cnt<order)
+                    current = getFromParent(root, ChildArr[0]); // merge
+            }
+            // if current node is not root (has a parent)
+            else{
+                Node[] pChildArr = parent.getChildArr();
+                int index = findIndex(parent, current);
+                // can get a key from the left sibling node
+                if(index != 0 && pChildArr[index-1].getKeyCnt()>order/2-1)  
+                    getFromLeft(parent, current); // get key from the left sibling node
+                // can get a key from the right sibling node    
+                else if(index != parent.getChildCnt()-1 && pChildArr[index+1].getKeyCnt()>order/2-1)
+                    getFromRight(parent, current);// get key from the right sibling node
+                // cannot get from any sibling node    
+                else{
+                    current = getFromParent(parent, current);   // merge
+                }
+            }
         }
-        return index;
+        // if current node is leaf node
+        if(current.isLeaf()){
+            // and if the current node has 'e'
+            if(current.findKeyIndex(e) != -1)
+                current.deleteKey(e); // delete 'e' from current node
+            return; // end function
+        }
+        // if current node is not leaf node but has 'e'
+        if(current.findKeyIndex(e)!=-1){
+            // replace 'e' with the value of the leaf node
+            // recursive within the replace function
+            replace(current, current.findKeyIndex(e));
+            return;
+        }
+        // Find child nodes in range and perform recursive
+        else{
+        Integer[] keyArr = current.getKey();
+        Node[] childArr = current.getChildArr();
+        int keyCnt = current.getKeyCnt();
+        if(e<keyArr[0])
+            deleteItem(current, childArr[0], e);
+        else if(keyArr[keyCnt-1]<e)
+            deleteItem(current, childArr[keyCnt], e);
+        else{
+            for(int i=1;i<keyCnt;i++){
+                if(keyArr[i-1]<e && e<keyArr[i])
+                    deleteItem(current, childArr[i], e);
+            }
+        }
+        }
     }
+  
+    //Replace the value of the current node n with 'the minimum value of the right subtree' of n
+    public void replace(Node n, int index){
+            Integer e = n.getKey(index);
+            Node temp = n.getchild(index+1);
+            // find the leftmost node (temp) in the right subtree
+            while(!temp.isLeaf()){
+                temp = temp.getchild(0);
+            }
+            Integer re = temp.getKey(0);
+            temp.deleteKey(0);  // delete minimum vlaue of temp
+            temp.insertKey(e);  // insert e into temp 
+            n.deleteKey(e); // delete e from current node
+            n.insertKey(re);    // Insert minimum value of found temp 
+            deleteItem(n, n.getchild(index), e);
+        }
+    
     // get key from left node of current node   
     public void getFromLeft(Node parent, Node current){
         Node[] pChildArr = parent.getChildArr();
@@ -164,6 +254,7 @@ public class BTree {
         if(!current.isLeaf())
             current.insertChild(current.getChildCnt(), right.deleteChild(0));
     }
+    
     // Merge the parent node with the current node
     public Node getFromParent(Node parent, Node current){
         int index = findIndex(parent, current);
@@ -205,90 +296,7 @@ public class BTree {
         }
         return left;    // return merged node
     }
-    //Replace the value of the current node n with 'the minimum value of the right subtree' of n
-    public void replace(Node n, int index){
-        Integer e = n.getKey(index);
-        Node temp = n.getchild(index+1);
-        // find the leftmost node (temp) in the right subtree
-        while(!temp.isLeaf()){//오른쪽 서브트리의 가장 왼쪽 아래 노드(temp) 찾기
-            temp = temp.getchild(0);
-        }
-        Integer re = temp.getKey(0);
-        temp.deleteKey(0);  // delete minimum vlaue of temp
-        temp.insertKey(e);  // insert e into temp 
-        n.deleteKey(e); // delete e from current node
-        n.insertKey(re);    // Insert minimum value of found temp 
-        deleteItem(n, n.getchild(index), e);
-    }
-
-    // delete 'e' from tree
-    public void delete(Integer e){
-        deleteItem(null, root, e);
-    }
-    // delete 'e' from tree 
-    // second argument is a current node 'n' and first argument 'parent' is parent of 'n' 
-    public void deleteItem(Node parent, Node current, Integer e){
-        int KeyCnt = current.getKeyCnt();
-        // if the current node has a minimum number of keys
-        if(KeyCnt<=order/2-1){
-            // and if current node is root node
-            if(current==root){
-                Node[] ChildArr = root.getChildArr();
-                int childCnt = root.getChildCnt();
-                int cnt = root.getKeyCnt();
-                for(int i=0;i<childCnt;i++)
-                    cnt += ChildArr[i].getChildCnt();
-                // If the root node can be merged with the child node
-                if(cnt<order)
-                    current = getFromParent(root, ChildArr[0]); // merge
-            }
-            // if current node is not root (has a child)
-            else{
-                Node[] pChildArr = parent.getChildArr();
-                int index = findIndex(parent, current);
-                // can get a key from the left sibling node
-                if(index != 0 && pChildArr[index-1].getKeyCnt()>order/2-1)  
-                    getFromLeft(parent, current); // get key from the left sibling node
-                // can get a key from the right sibling node    
-                else if(index != parent.getChildCnt()-1 && pChildArr[index+1].getKeyCnt()>order/2-1)//오른쪽 형제에서 key를 빌릴 수 있으면
-                    getFromRight(parent, current);// get key from the right sibling node
-                // cannot get from any sibling node    
-                else{
-                    current = getFromParent(parent, current);   // merge
-                }
-            }
-        }
-        // if current node is leaf node
-        if(current.isLeaf()){
-            // and if the current node has 'e'
-            if(current.findKeyIndex(e) != -1)
-                current.deleteKey(e); // delete 'e' from current node
-            return; // end function
-        }
-        // if current node is not leaf node but has 'e'
-        if(current.findKeyIndex(e)!=-1){
-            // replace 'e' with the value of the leaf node
-            // recursive within the replace function
-            replace(current, current.findKeyIndex(e));
-            return;
-        }
-        // Find child nodes in range and perform recursive
-        else{
-            Integer[] keyArr = current.getKey();
-        Node[] childArr = current.getChildArr();
-        int keyCnt = current.getKeyCnt();
-        if(e<keyArr[0])
-            deleteItem(current, childArr[0], e);
-        else if(keyArr[keyCnt-1]<e)
-            deleteItem(current, childArr[keyCnt], e);
-        else{
-            for(int i=1;i<keyCnt;i++){
-                if(keyArr[i-1]<e && e<keyArr[i])
-                    deleteItem(current, childArr[i], e);
-            }
-        }
-        }
-    }
+    
     // display BTree 
     public void display(){
         Queue<Node> queue = new LinkedList<Node>(); // Queue for display (FIFO)
